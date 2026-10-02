@@ -1,3 +1,46 @@
+# FutureEval Agent — Masnow22
+
+本仓库基于 Metaculus 官方秋季 2026 bot 模板。以下是本仓库实际运行方式，优先于下方保留的上游说明。
+
+## 首次运行
+
+1. 完成参与表，并申请免费 LLM 额度：https://forms.gle/aQdYMq9Pisrf1v7d8
+2. 在 Settings → Secrets and variables → Actions → Secrets 添加：
+   - `METACULUS_TOKEN`：bot 账户的 API Token
+   - `OPENROUTER_API_KEY`：申请获批的 LLM key（或已有的 LLM key）
+3. 在 Actions 启用工作流，选择 **Test Bot → Run workflow**。
+   - 默认不勾选 publish：生成预测但不提交；仍会消耗模型／搜索额度。
+   - 成功后勾选 publish 再运行，向 bot-testing-area 提交测试预测。
+4. 切换到 Metaculus bot 账户检查预测和 Private 说明。
+5. 手动运行 **Forecast on new AI tournament questions**，勾选 publish，参与 Fall + MiniBench。
+
+密钥只存到 GitHub Secrets，不放代码、README 或聊天。还没有免费额度时无需充值，先等申请结果。
+
+## 自动运行
+
+比赛定时任务默认跳过。在 Actions 的 **Variables** 标签添加：
+
+- `FUTUREEVAL_AUTORUN_ENABLED=true`：允许每 20 分钟检查新题
+- `FUTUREEVAL_PUBLISH_ENABLED=true`：定时运行时提交预测
+
+关闭自动运行：把 `FUTUREEVAL_AUTORUN_ENABLED` 改为 `false`。手动工作流仍可运行。
+定时运行但未启用提交会重复生成尚未提交的题目预测并消耗额度，因此准备正式参赛时一起设置这两个开关。
+
+每题先使用一次研究、一次预测；这是减少调用次数，不是金额上限。
+沿用官方 SDK 的默认模型，本次没有更换模型。
+预测报告暂存于运行机器的 `logs/forecasts/`，任务结束后不会持久保存。
+任一题出现异常时工作流返回失败，避免误把部分失败当成完全成功。
+Metaculus Cup 改为仅手动运行。
+
+## 检查
+
+**Validate bot configuration** 会检查 Python 语法和工作流 YAML，不需要密钥或 LLM 额度。
+真实 API、模型可用性和提交结果需要运行 Test Bot 才能验证。
+
+---
+
+## 上游参考说明（部分默认设置已被上述配置覆盖）
+
 # Simple Metaculus forecasting bot
 This repository contains a simple bot meant to get you started with creating your own bot for the AI Forecasting Tournament. Go to https://www.metaculus.com/futureeval/participate/ for more info and tournament rules (and then go to the  "Getting Started" section of our [resources](https://www.metaculus.com/notebooks/38928/ai-benchmark-resources/#want-to-join-the-ai-forecasting-benchmark) page).
 

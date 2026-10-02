@@ -1,6 +1,7 @@
 import argparse
 import asyncio
 import logging
+import os
 from datetime import datetime, timezone
 from typing import Literal
 
@@ -701,7 +702,7 @@ if __name__ == "__main__":
     run_mode: Literal["tournament", "metaculus_cup", "test_questions"] = args.mode
 
     check_environment(strict=True)
-    publish_to_metaculus = True
+    publish_to_metaculus = os.getenv("PUBLISH_FORECASTS", "false").lower() == "true"
     print_startup_banner(run_mode, will_publish=publish_to_metaculus)
 
     # Configure the bot. The `llms=` block below is commented out to use
@@ -709,10 +710,10 @@ if __name__ == "__main__":
     # uncomment and edit to pin specific models.
     template_bot = FallTemplateBot2026(
         research_reports_per_question=1,
-        predictions_per_research_report=5,
+        predictions_per_research_report=1,
         use_research_summary_to_forecast=False,
         publish_reports_to_metaculus=publish_to_metaculus,
-        folder_to_save_reports_to=None,
+        folder_to_save_reports_to="logs/forecasts/",
         skip_previously_forecasted_questions=True,
         extra_metadata_in_explanation=True,
         # llms={
@@ -781,3 +782,7 @@ if __name__ == "__main__":
         will_publish=publish_to_metaculus,
         tournament_url=TOURNAMENT_URLS.get(run_mode),
     )
+
+    # Report failed attempts as failed Actions runs instead of a false green result.
+    if any(isinstance(report, BaseException) for report in forecast_reports):
+        raise SystemExit(1)
