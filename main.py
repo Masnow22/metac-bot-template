@@ -7,6 +7,8 @@ from typing import Literal
 
 import dotenv
 
+from openrouter_research import research_with_openrouter
+
 # Runtime helpers (env validation, banners, dependency-warning suppression).
 from bot_helpers import (
     check_environment,
@@ -132,8 +134,13 @@ class FallTemplateBot2026(ForecastBot):
     async def run_research(self, question: MetaculusQuestion) -> str:
         async with self._concurrency_limiter:
             research = ""
-            researcher = self.get_llm("researcher")
+            if os.getenv("OPENROUTER_API_KEY"):
+                prompt = self._get_research_prompt(question, "openrouter-web-search")
+                research = await research_with_openrouter(prompt)
+                logger.info("Completed web research for %s", question.page_url)
+                return research
 
+            researcher = self.get_llm("researcher")
             prompt = self._get_research_prompt(question, researcher)
 
             if isinstance(researcher, GeneralLlm):
@@ -770,10 +777,14 @@ if __name__ == "__main__":
         # the recommended target for smoke-testing your bot.
         # https://www.metaculus.com/tournament/bot-testing-area/
         template_bot.skip_previously_forecasted_questions = False
+        test_questions = client.get_all_open_questions_from_tournament("bot-testing-area")
+        if not test_questions:
+            raise RuntimeError("No open test questions are available.")
+        # First smoke test uses one binary question where possible to limit cost.
+        binary_tests = [q for q in test_questions if isinstance(q, BinaryQuestion)]
+        smoke_question = (binary_tests or test_questions)[0]
         forecast_reports = asyncio.run(
-            template_bot.forecast_on_tournament(
-                "bot-testing-area", return_exceptions=True
-            )
+            template_bot.forecast_questions([smoke_question], return_exceptions=True)
         )
 
     template_bot.log_report_summary(forecast_reports)

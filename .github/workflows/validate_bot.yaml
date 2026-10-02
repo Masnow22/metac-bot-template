@@ -18,7 +18,7 @@ jobs:
         with:
           python-version: "3.11"
       - name: Check Python syntax
-        run: python -m py_compile main.py bot_helpers.py main_with_no_framework.py
+        run: python -m py_compile main.py bot_helpers.py main_with_no_framework.py openrouter_research.py
       - name: Install YAML parser
         run: python -m pip install PyYAML==6.0.2
       - name: Check workflow YAML
